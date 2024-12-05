@@ -1,9 +1,8 @@
 package com.bombk1n.materialpro.controllers;
 
-import com.bombk1n.materialpro.dto.Movie;
+import com.bombk1n.materialpro.dto.MovieDTO;
 import com.bombk1n.materialpro.service.MovieService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,31 +21,31 @@ public class MovieController {
     }
 
     @GetMapping
-    public List<Movie> getAllMovies() {
+    public List<MovieDTO> getAllMovies() {
         return movieService.getAllMovies();
     }
 
     @GetMapping("/{id}")
-    public Optional<Movie> getMovie(@PathVariable Long id) {
+    public Optional<MovieDTO> getMovie(@PathVariable String id) {
         return movieService.getMovieById(id);
     }
 
     @PostMapping
-    public Movie addMovie(@RequestBody Movie movie) {
+    public MovieDTO addMovie(@RequestBody MovieDTO movie) {
         return movieService.saveMovie(movie);
     }
     @PostMapping("/bulk")
-    public List<Movie> addMovies(@RequestBody List<Movie> movies) {
+    public List<MovieDTO> addMovies(@RequestBody List<MovieDTO> movies) {
         return movieService.saveMovies(movies);
     }
 
     @PutMapping("/{id}")
-    public Movie updateMovie(@PathVariable Long id, @RequestBody Movie movie) {
+    public MovieDTO updateMovie(@PathVariable String id, @RequestBody MovieDTO movie) {
         return movieService.updateMovie(id,movie);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteMovie(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteMovie(@PathVariable String id) {
         movieService.deleteMovie(id);
         return ResponseEntity.noContent().build();
     }
