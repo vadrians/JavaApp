@@ -45,23 +45,6 @@ public class MovieEntity implements MovieModel {
         this.showtimeEntities = showtimeEntities;
     }
 
-    public MovieEntity(MovieDTO movieDTO){
-            this.id = Long.valueOf(movieDTO.getId());
-            this.title = movieDTO.getTitle();
-            this.director = movieDTO.getDirector();
-            this.releaseYear = movieDTO.getReleaseYear();
-            this.genre = movieDTO.getGenre();
-            this.duration = movieDTO.getDuration();
-            this.rating = movieDTO.getRating();
-            this.coverImage = movieDTO.getCoverImage();
-            this.actors = movieDTO.getActors();
-            this.showtimeEntities = movieDTO.getShowtimes().stream()
-                    .map(showtimeDTO -> new MovieEntity.ShowtimeEntity(showtimeDTO.getDay(), showtimeDTO.getTimes()))
-                    .collect(Collectors.toList());
-
-
-    }
-
     public MovieEntity() {
     }
 

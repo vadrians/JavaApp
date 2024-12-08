@@ -35,25 +35,8 @@ public class MovieDocument implements MovieModel {
         this.showtimes = showtimes;
     }
 
-    public MovieDocument(MovieDTO movieDTO) {
-        this.id = movieDTO.getId();
-        this.title = movieDTO.getTitle();
-        this.director = movieDTO.getDirector();
-        this.releaseYear = movieDTO.getReleaseYear();
-        this.genre = movieDTO.getGenre();
-        this.duration = movieDTO.getDuration();
-        this.rating = movieDTO.getRating();
-        this.coverImage = movieDTO.getCoverImage();
-        this.actors = movieDTO.getActors();
-        this.showtimes = movieDTO.getShowtimes().stream()
-                .map(showtimeDTO -> new ShowtimeDocument(showtimeDTO.getDay(), showtimeDTO.getTimes()))
-                .collect(Collectors.toList());
-
-    }
-
     public MovieDocument() {}
 
-    // Getters and setters
     public String getId() {
         return id;
     }

@@ -4,6 +4,8 @@ import com.bombk1n.materialpro.dao.IMovieRepository;
 import com.bombk1n.materialpro.dto.MovieDTO;
 import com.bombk1n.materialpro.model.MovieDocument;
 import com.bombk1n.materialpro.model.MovieEntity;
+import com.bombk1n.materialpro.model.MovieModel;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -17,25 +19,28 @@ public class MovieService {
 
     private final IMovieRepository<MovieEntity> moviePostgresRepository;
     private final IMovieRepository<MovieDocument> movieMongoDbRepository;
+    private final ModelMapper modelMapper;
 
     @Autowired
     public MovieService(
             @Qualifier("moviePostgresRepository") IMovieRepository<MovieEntity> moviePostgresRepository,
-            @Qualifier("movieMongoDbRepository") IMovieRepository<MovieDocument> movieMongoDbRepository) {
+            @Qualifier("movieMongoDbRepository") IMovieRepository<MovieDocument> movieMongoDbRepository,
+            ModelMapper modelMapper) {
         this.moviePostgresRepository = moviePostgresRepository;
         this.movieMongoDbRepository = movieMongoDbRepository;
+        this.modelMapper = modelMapper;
     }
+
 
     public MovieDTO saveMovie(MovieDTO movie) {
 
-        MovieEntity movieEntity = new MovieEntity(movie);
+        MovieEntity movieEntity = convertDtoToEntity(movie);
         moviePostgresRepository.saveMovie(movieEntity);
 
-
-        MovieDocument movieDocument = new MovieDocument(movie);
+        MovieDocument movieDocument = convertDtoToDocument(movie);
         movieMongoDbRepository.saveMovie(movieDocument);
 
-        return new MovieDTO(movieDocument);
+        return convertModelToDto(movieDocument);
     }
 
     public List<MovieDTO> getAllMovies() {
@@ -43,7 +48,7 @@ public class MovieService {
         List<MovieDocument> movieDocuments = movieMongoDbRepository.getAllMovies();
 
         return movieDocuments.stream()
-                .map(MovieDTO::new)
+                .map(this::convertModelToDto)
                 .collect(Collectors.toList());
     }
 
@@ -53,10 +58,11 @@ public class MovieService {
 
         Optional<MovieDocument> movieDocumentOptional = movieMongoDbRepository.getMovie(id);
 
-        if (movieEntityOptional.isPresent() && movieDocumentOptional.isPresent()) {
-            return Optional.of(new MovieDTO(movieDocumentOptional.get()));
+        if (movieEntityOptional.isPresent()) {
+            return Optional.of(convertModelToDto(movieEntityOptional.get()));
+        } else if (movieDocumentOptional.isPresent()) {
+            return Optional.of(convertModelToDto(movieDocumentOptional.get()));
         }
-
         return Optional.empty();
     }
 
@@ -73,14 +79,15 @@ public class MovieService {
             if (updatedMovie.getDuration() > 0) movieEntity.setDuration(updatedMovie.getDuration());
             if (updatedMovie.getRating() > 0) movieEntity.setRating(updatedMovie.getRating());
             if (updatedMovie.getCoverImage() != null) movieEntity.setCoverImage(updatedMovie.getCoverImage());
-            if (updatedMovie.getActors() != null && !updatedMovie.getActors().isEmpty()) movieEntity.setActors(updatedMovie.getActors());
-            if (updatedMovie.getShowtimes() != null && !updatedMovie.getShowtimes().isEmpty()) movieEntity.setShowtimes(updatedMovie.getShowtimes().stream()
-                    .map(showtimeDTO -> new MovieEntity.ShowtimeEntity(showtimeDTO.getDay(), showtimeDTO.getTimes()))
-                    .collect(Collectors.toList()));
+            if (updatedMovie.getActors() != null && !updatedMovie.getActors().isEmpty())
+                movieEntity.setActors(updatedMovie.getActors());
+            if (updatedMovie.getShowtimes() != null && !updatedMovie.getShowtimes().isEmpty())
+                movieEntity.setShowtimes(updatedMovie.getShowtimes().stream()
+                        .map(showtimeDTO -> new MovieEntity.ShowtimeEntity(showtimeDTO.getDay(), showtimeDTO.getTimes()))
+                        .collect(Collectors.toList()));
 
             moviePostgresRepository.saveMovie(movieEntity);
         }
-
 
         Optional<MovieDocument> existingMovieDocument = movieMongoDbRepository.getMovie(id);
         if (existingMovieDocument.isPresent()) {
@@ -93,10 +100,12 @@ public class MovieService {
             if (updatedMovie.getDuration() > 0) movieDocument.setDuration(updatedMovie.getDuration());
             if (updatedMovie.getRating() > 0) movieDocument.setRating(updatedMovie.getRating());
             if (updatedMovie.getCoverImage() != null) movieDocument.setCoverImage(updatedMovie.getCoverImage());
-            if (updatedMovie.getActors() != null && !updatedMovie.getActors().isEmpty()) movieDocument.setActors(updatedMovie.getActors());
-            if (updatedMovie.getShowtimes() != null && !updatedMovie.getShowtimes().isEmpty()) movieDocument.setShowtimes(updatedMovie.getShowtimes().stream()
-                    .map(showtimeDTO -> new MovieDocument.ShowtimeDocument(showtimeDTO.getDay(), showtimeDTO.getTimes()))
-                    .collect(Collectors.toList()));
+            if (updatedMovie.getActors() != null && !updatedMovie.getActors().isEmpty())
+                movieDocument.setActors(updatedMovie.getActors());
+            if (updatedMovie.getShowtimes() != null && !updatedMovie.getShowtimes().isEmpty())
+                movieDocument.setShowtimes(updatedMovie.getShowtimes().stream()
+                        .map(showtimeDTO -> new MovieDocument.ShowtimeDocument(showtimeDTO.getDay(), showtimeDTO.getTimes()))
+                        .collect(Collectors.toList()));
 
             movieMongoDbRepository.saveMovie(movieDocument);
         }
@@ -111,15 +120,24 @@ public class MovieService {
 
     public List<MovieDTO> saveMovies(List<MovieDTO> movies) {
         List<MovieEntity> movieEntities = movies.stream()
-                .map(MovieEntity::new)
+                .map(this::convertDtoToEntity)
                 .collect(Collectors.toList());
         moviePostgresRepository.saveAll(movieEntities);
 
         List<MovieDocument> movieDocuments = movies.stream()
-                .map(MovieDocument::new)
+                .map(this::convertDtoToDocument)
                 .collect(Collectors.toList());
         movieMongoDbRepository.saveAll(movieDocuments);
 
         return movies;
+    }
+    private MovieDTO convertModelToDto(MovieModel movieModel) {
+        return modelMapper.map(movieModel, MovieDTO.class);
+    }
+    private MovieEntity convertDtoToEntity(MovieDTO movieDTO) {
+        return modelMapper.map(movieDTO, MovieEntity.class);
+    }
+    private MovieDocument convertDtoToDocument(MovieDTO movieDTO){
+        return modelMapper.map(movieDTO, MovieDocument.class);
     }
 }

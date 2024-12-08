@@ -32,35 +32,6 @@ public class MovieDTO {
         this.showtimes = showtimes;
     }
 
-    public MovieDTO(MovieEntity movieEntity) {
-        this.id = String.valueOf(movieEntity.getId());
-        this.title = movieEntity.getTitle();
-        this.director = movieEntity.getDirector();
-        this.releaseYear = movieEntity.getReleaseYear();
-        this.genre = movieEntity.getGenre();
-        this.duration = movieEntity.getDuration();
-        this.rating = movieEntity.getRating();
-        this.coverImage = movieEntity.getCoverImage();
-        this.actors = movieEntity.getActors();
-        this.showtimes = movieEntity.getShowtimes().stream()
-                .map(showtimeDTO -> new MovieDTO.ShowtimeDTO(showtimeDTO.getDay(), showtimeDTO.getTimes()))
-                .collect(Collectors.toList());
-    }
-    public MovieDTO(MovieDocument movieDocument) {
-        this.id = String.valueOf(movieDocument.getId());
-        this.title = movieDocument.getTitle();
-        this.director = movieDocument.getDirector();
-        this.releaseYear = movieDocument.getReleaseYear();
-        this.genre = movieDocument.getGenre();
-        this.duration = movieDocument.getDuration();
-        this.rating = movieDocument.getRating();
-        this.coverImage = movieDocument.getCoverImage();
-        this.actors = movieDocument.getActors();
-        this.showtimes = movieDocument.getShowtimes().stream()
-                .map(showtimeDTO -> new MovieDTO.ShowtimeDTO(showtimeDTO.getDay(), showtimeDTO.getTimes()))
-                .collect(Collectors.toList());
-    }
-
     public MovieDTO() {}
 
     public String getId() {
