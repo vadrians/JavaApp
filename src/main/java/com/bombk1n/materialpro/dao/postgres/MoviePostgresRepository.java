@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public class MoviePostgresRepository implements IMovieRepository<MovieEntity> {
+public class MoviePostgresRepository implements IMovieRepository{
 
     private final MyJpaRepository jpaRepository;
 
@@ -29,13 +29,13 @@ public class MoviePostgresRepository implements IMovieRepository<MovieEntity> {
 
     @Override
     public Optional<MovieEntity> getMovie(String id) {
-        return jpaRepository.findById(Long.parseLong(id));
+        return jpaRepository.findById(id);
     }
 
     @Override
     public MovieEntity updateMovie(String id, MovieEntity updatedMovie) {
-        if (jpaRepository.existsById(Long.parseLong(id))) {
-            updatedMovie.setId(Long.parseLong(id));
+        if (jpaRepository.existsById(id)) {
+            updatedMovie.setId(id);
             return jpaRepository.save(updatedMovie);
         }
         return null;
@@ -43,12 +43,12 @@ public class MoviePostgresRepository implements IMovieRepository<MovieEntity> {
 
     @Override
     public void deleteMovie(String id) {
-        jpaRepository.deleteById(Long.parseLong(id));
+        jpaRepository.deleteById(id);
     }
 
     @Override
     public boolean existsMovie(String id) {
-        return jpaRepository.existsById(Long.parseLong(id));
+        return jpaRepository.existsById(id);
     }
 
     @Override
