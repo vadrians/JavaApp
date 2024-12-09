@@ -1,8 +1,7 @@
 package com.bombk1n.materialpro.dao.mongoDB;
 
 import com.bombk1n.materialpro.dao.IMovieRepository;
-
-import com.bombk1n.materialpro.model.MovieDocument;
+import com.bombk1n.materialpro.model.MovieEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
@@ -12,32 +11,32 @@ import java.util.Optional;
 
 
 @Repository
-public class MovieMongoDbRepository implements IMovieRepository<MovieDocument> {
+public class MovieMongoRepository implements IMovieRepository {
 
     private final MyMongoRepository mongoRepository;
 
     @Autowired
-    public MovieMongoDbRepository(MyMongoRepository mongoRepository) {
+    public MovieMongoRepository(MyMongoRepository mongoRepository) {
         this.mongoRepository = mongoRepository;
     }
 
     @Override
-    public MovieDocument saveMovie(MovieDocument movie) {
+    public MovieEntity saveMovie(MovieEntity movie) {
         return mongoRepository.save(movie);
     }
 
     @Override
-    public List<MovieDocument> getAllMovies() {
+    public List<MovieEntity> getAllMovies() {
         return mongoRepository.findAll();
     }
 
     @Override
-    public Optional<MovieDocument> getMovie(String id) {
+    public Optional<MovieEntity> getMovie(String id) {
         return mongoRepository.findById(id);
     }
 
     @Override
-    public MovieDocument updateMovie(String id, MovieDocument updatedMovie) {
+    public MovieEntity updateMovie(String id, MovieEntity updatedMovie) {
         if (mongoRepository.existsById(id)) {
             updatedMovie.setId(id);
             return mongoRepository.save(updatedMovie);
@@ -56,7 +55,7 @@ public class MovieMongoDbRepository implements IMovieRepository<MovieDocument> {
     }
 
     @Override
-    public List<MovieDocument> saveAll(List<MovieDocument> movies) {
+    public List<MovieEntity> saveAll(List<MovieEntity> movies) {
         return mongoRepository.saveAll(movies);
     }
 }

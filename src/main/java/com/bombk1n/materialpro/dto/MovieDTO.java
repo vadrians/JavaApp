@@ -1,10 +1,6 @@
 package com.bombk1n.materialpro.dto;
 
-import com.bombk1n.materialpro.model.MovieDocument;
-import com.bombk1n.materialpro.model.MovieEntity;
-
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class MovieDTO {
 
