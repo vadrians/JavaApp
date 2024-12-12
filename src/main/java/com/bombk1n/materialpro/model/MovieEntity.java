@@ -5,12 +5,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.*;
 import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.util.List;
 
 
 @Document(collection = "movies")
 @Entity
-public class MovieEntity{
+public class MovieEntity {
 
     @org.springframework.data.annotation.Id
     @Id
@@ -35,10 +36,13 @@ public class MovieEntity{
     private List<ShowtimeEntity> showtimeEntities;
 
     public MovieEntity() {
-
+        if (this.id == null) {
+            this.id = new ULID().nextULID();
+        }
     }
 
     public MovieEntity(String title, String director, int releaseYear, String genre, int duration, double rating, String coverImage, List<String> actors, List<ShowtimeEntity> showtimeEntities) {
+        this();
         this.title = title;
         this.director = director;
         this.releaseYear = releaseYear;
@@ -128,13 +132,6 @@ public class MovieEntity{
 
     public void setShowtimes(List<ShowtimeEntity> showtimeEntities) {
         this.showtimeEntities = showtimeEntities;
-    }
-
-    @PrePersist
-    public void onPrePersist() {
-        if (this.id == null) {
-            this.id = new ULID().nextULID();
-        }
     }
 
     @Entity
