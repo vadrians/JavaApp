@@ -56,6 +56,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+        <dependency>
+            <groupId>de.huxhorn.sulky</groupId>
+            <artifactId>de.huxhorn.sulky.ulid</artifactId>
+            <version>8.2.0</version>
+        </dependency>
 <!--        <dependency>-->
 <!--            <groupId>org.thymeleaf.extras</groupId>-->
 <!--            <artifactId>thymeleaf-extras-springsecurity6</artifactId>-->

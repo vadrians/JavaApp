@@ -4,9 +4,9 @@ import com.bombk1n.materialpro.dao.IMovieRepository;
 import com.bombk1n.materialpro.dto.MovieDTO;
 import com.bombk1n.materialpro.exceptions.DatabaseConnectionException;
 import com.bombk1n.materialpro.exceptions.MovieNotFoundException;
-import com.bombk1n.materialpro.model.MovieDocument;
 import com.bombk1n.materialpro.model.MovieEntity;
-import com.bombk1n.materialpro.model.MovieModel;
+import de.huxhorn.sulky.ulid.ULID;
+import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -17,18 +17,17 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class MovieService {
 
-    private final IMovieRepository<MovieEntity> moviePostgresRepository;
-    private final IMovieRepository<MovieDocument> movieMongoDbRepository;
+    //    private final IMovieRepository moviePostgresRepository; //not used
+    private final IMovieRepository movieMongoDbRepository;
     private final ModelMapper modelMapper;
 
     @Autowired
     public MovieService(
-            @Qualifier("moviePostgresRepository") IMovieRepository<MovieEntity> moviePostgresRepository,
-            @Qualifier("movieMongoDbRepository") IMovieRepository<MovieDocument> movieMongoDbRepository,
+            @Qualifier("movieMongoRepository") IMovieRepository movieMongoDbRepository,
             ModelMapper modelMapper) {
-        this.moviePostgresRepository = moviePostgresRepository;
         this.movieMongoDbRepository = movieMongoDbRepository;
         this.modelMapper = modelMapper;
     }
@@ -37,84 +36,67 @@ public class MovieService {
     public MovieDTO saveMovie(MovieDTO movie) {
         try {
             MovieEntity movieEntity = convertDtoToEntity(movie);
-            moviePostgresRepository.saveMovie(movieEntity);
-
-            MovieDocument movieDocument = convertDtoToDocument(movie);
-            movieMongoDbRepository.saveMovie(movieDocument);
-
-            return convertModelToDto(movieDocument);
+            movieMongoDbRepository.saveMovie(movieEntity);
+            return convertEntityToDto(movieEntity);
         } catch (Exception e) {
-            throw new DatabaseConnectionException("Error while saving movie data");
+            throw new DatabaseConnectionException("Error saving movie: " + e.getMessage());
         }
     }
 
     public List<MovieDTO> getAllMovies() {
-    try {
-        List<MovieDocument> movieDocuments = movieMongoDbRepository.getAllMovies();
-
-        return movieDocuments.stream()
-                .map(this::convertModelToDto)
-                .collect(Collectors.toList());
-    }catch (Exception e) {
-        throw new DatabaseConnectionException("Error while retrieving movies");
-    }
-    }
-
-    public Optional<MovieDTO> getMovieById(String id) {
-
-        Optional<MovieEntity> movieEntityOptional = moviePostgresRepository.getMovie(id);
-
-        Optional<MovieDocument> movieDocumentOptional = movieMongoDbRepository.getMovie(id);
-
-        if (movieEntityOptional.isPresent()) {
-            return Optional.of(convertModelToDto(movieEntityOptional.get()));
-        } else if (movieDocumentOptional.isPresent()) {
-            return Optional.of(convertModelToDto(movieDocumentOptional.get()));
+        try {
+            List<MovieEntity> movieEntities = movieMongoDbRepository.getAllMovies();
+            return movieEntities.stream()
+                    .map(this::convertEntityToDto)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new DatabaseConnectionException("Error fetching all movies: " + e.getMessage());
         }
-        throw new MovieNotFoundException("Movie with id " + id + " not found");
+    }
+
+    public MovieDTO getMovieById(String id) {
+        return movieMongoDbRepository.getMovie(id)
+                .map((this::convertEntityToDto))
+                .orElseThrow(() -> new MovieNotFoundException("Movie with id " + id + " not found"));
     }
 
     public MovieDTO updateMovie(String id, MovieDTO updatedMovie) {
-        Optional<MovieEntity> existingMovieEntity = moviePostgresRepository.getMovie(id);
-        if (existingMovieEntity.isPresent()) {
-            MovieEntity movieEntity = existingMovieEntity.get();
-            updateEntity(movieEntity, updatedMovie);
-            moviePostgresRepository.saveMovie(movieEntity);
-        }
+        try {
+            Optional<MovieEntity> mongoMovie = movieMongoDbRepository.getMovie(id);
+            if (mongoMovie.isEmpty()) {
+                throw new MovieNotFoundException("Movie with id " + id + " not found");
+            }
+            MovieEntity movieEntity = mongoMovie.get();
+            updateEntityFields(movieEntity, updatedMovie);
 
-        Optional<MovieDocument> existingMovieDocument = movieMongoDbRepository.getMovie(id);
-        if (existingMovieDocument.isPresent()) {
-            MovieDocument movieDocument = existingMovieDocument.get();
-            updateDocument(movieDocument, updatedMovie);
-            movieMongoDbRepository.saveMovie(movieDocument);
-        }
+            movieMongoDbRepository.saveMovie(movieEntity);
 
-        return updatedMovie;
+            return convertEntityToDto(mongoMovie.get());
+        } catch (Exception e) {
+            throw new DatabaseConnectionException("Error updating movie with id " + id + ": " + e.getMessage());
+        }
     }
 
-    private void updateEntity(MovieEntity movieEntity, MovieDTO updatedMovie) {
-        if (updatedMovie.getTitle() != null) movieEntity.setTitle(updatedMovie.getTitle());
-        if (updatedMovie.getDirector() != null) movieEntity.setDirector(updatedMovie.getDirector());
-        if (updatedMovie.getReleaseYear() > 0) movieEntity.setReleaseYear(updatedMovie.getReleaseYear());
-        if (updatedMovie.getGenre() != null) movieEntity.setGenre(updatedMovie.getGenre());
-        if (updatedMovie.getDuration() > 0) movieEntity.setDuration(updatedMovie.getDuration());
-        if (updatedMovie.getRating() > 0) movieEntity.setRating(updatedMovie.getRating());
-        if (updatedMovie.getCoverImage() != null) movieEntity.setCoverImage(updatedMovie.getCoverImage());
-    }
-
-    private void updateDocument(MovieDocument movieDocument, MovieDTO updatedMovie) {
-        if (updatedMovie.getTitle() != null) movieDocument.setTitle(updatedMovie.getTitle());
-        if (updatedMovie.getDirector() != null) movieDocument.setDirector(updatedMovie.getDirector());
-        if (updatedMovie.getReleaseYear() > 0) movieDocument.setReleaseYear(updatedMovie.getReleaseYear());
-        if (updatedMovie.getGenre() != null) movieDocument.setGenre(updatedMovie.getGenre());
-        if (updatedMovie.getDuration() > 0) movieDocument.setDuration(updatedMovie.getDuration());
-        if (updatedMovie.getRating() > 0) movieDocument.setRating(updatedMovie.getRating());
-        if (updatedMovie.getCoverImage() != null) movieDocument.setCoverImage(updatedMovie.getCoverImage());
+    private void updateEntityFields(MovieEntity entity, MovieDTO updatedMovie) {
+        Optional.ofNullable(updatedMovie.getTitle()).ifPresent(entity::setTitle);
+        Optional.ofNullable(updatedMovie.getDirector()).ifPresent(entity::setDirector);
+        if (updatedMovie.getReleaseYear() > 0) entity.setReleaseYear(updatedMovie.getReleaseYear());
+        Optional.ofNullable(updatedMovie.getGenre()).ifPresent(entity::setGenre);
+        if (updatedMovie.getDuration() > 0) entity.setDuration(updatedMovie.getDuration());
+        if (updatedMovie.getRating() > 0) entity.setRating(updatedMovie.getRating());
+        Optional.ofNullable(updatedMovie.getCoverImage()).ifPresent(entity::setCoverImage);
     }
 
     public void deleteMovie(String id) {
-        moviePostgresRepository.deleteMovie(id);
-        movieMongoDbRepository.deleteMovie(id);
+        try {
+            Optional<MovieEntity> movieEntity = movieMongoDbRepository.getMovie(id);
+            if (movieEntity.isEmpty()) {
+                throw new MovieNotFoundException("Movie with id " + id + " not found");
+            }
+            movieMongoDbRepository.deleteMovie(id);
+        } catch (Exception e) {
+            throw new DatabaseConnectionException("Error deleting movie with id " + id + ": " + e.getMessage());
+        }
     }
 
     public List<MovieDTO> saveMovies(List<MovieDTO> movies) {
@@ -122,25 +104,23 @@ public class MovieService {
             List<MovieEntity> movieEntities = movies.stream()
                     .map(this::convertDtoToEntity)
                     .collect(Collectors.toList());
-            moviePostgresRepository.saveAll(movieEntities);
-
-            List<MovieDocument> movieDocuments = movies.stream()
-                    .map(this::convertDtoToDocument)
-                    .collect(Collectors.toList());
-            movieMongoDbRepository.saveAll(movieDocuments);
-
+            movieMongoDbRepository.saveAll(movieEntities);
             return movies;
         } catch (Exception e) {
-            throw new DatabaseConnectionException("Error while saving multiple movies");
+            throw new DatabaseConnectionException(e.getMessage());
         }
     }
-    private MovieDTO convertModelToDto(MovieModel movieModel) {
+
+    private MovieDTO convertEntityToDto(MovieEntity movieModel) {
         return modelMapper.map(movieModel, MovieDTO.class);
+
     }
+
     private MovieEntity convertDtoToEntity(MovieDTO movieDTO) {
+        if (movieDTO.getId() == null) {
+            movieDTO.setId(new ULID().nextULID());
+        }
         return modelMapper.map(movieDTO, MovieEntity.class);
     }
-    private MovieDocument convertDtoToDocument(MovieDTO movieDTO){
-        return modelMapper.map(movieDTO, MovieDocument.class);
-    }
+
 }

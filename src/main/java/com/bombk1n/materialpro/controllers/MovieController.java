@@ -15,6 +15,7 @@ import java.util.Optional;
 public class MovieController {
 
     private MovieService movieService;
+
     @Autowired
     public MovieController(MovieService movieService) {
         this.movieService = movieService;
@@ -27,13 +28,14 @@ public class MovieController {
 
     @GetMapping("/{id}")
     public Optional<MovieDTO> getMovie(@PathVariable String id) {
-        return movieService.getMovieById(id);
+        return Optional.ofNullable(movieService.getMovieById(id));
     }
 
     @PostMapping
     public MovieDTO addMovie(@RequestBody MovieDTO movie) {
         return movieService.saveMovie(movie);
     }
+
     @PostMapping("/bulk")
     public List<MovieDTO> addMovies(@RequestBody List<MovieDTO> movies) {
         return movieService.saveMovies(movies);
@@ -41,7 +43,7 @@ public class MovieController {
 
     @PutMapping("/{id}")
     public MovieDTO updateMovie(@PathVariable String id, @RequestBody MovieDTO movie) {
-        return movieService.updateMovie(id,movie);
+        return movieService.updateMovie(id, movie);
     }
 
     @DeleteMapping("/{id}")

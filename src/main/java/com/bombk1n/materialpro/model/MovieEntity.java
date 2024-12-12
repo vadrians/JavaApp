@@ -1,20 +1,22 @@
 package com.bombk1n.materialpro.model;
 
-import com.bombk1n.materialpro.dto.MovieDTO;
+import de.huxhorn.sulky.ulid.ULID;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.*;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.util.List;
-import java.util.stream.Collectors;
 
+
+@Document(collection = "movies")
 @Entity
-public class MovieEntity implements MovieModel {
+public class MovieEntity {
 
+    @org.springframework.data.annotation.Id
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(unique = true, nullable = false)
+    private String id;
 
     private String title;
     private String director;
@@ -33,7 +35,14 @@ public class MovieEntity implements MovieModel {
     @JoinColumn(name = "movie_id")
     private List<ShowtimeEntity> showtimeEntities;
 
+    public MovieEntity() {
+        if (this.id == null) {
+            this.id = new ULID().nextULID();
+        }
+    }
+
     public MovieEntity(String title, String director, int releaseYear, String genre, int duration, double rating, String coverImage, List<String> actors, List<ShowtimeEntity> showtimeEntities) {
+        this();
         this.title = title;
         this.director = director;
         this.releaseYear = releaseYear;
@@ -45,14 +54,11 @@ public class MovieEntity implements MovieModel {
         this.showtimeEntities = showtimeEntities;
     }
 
-    public MovieEntity() {
-    }
-
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -132,8 +138,8 @@ public class MovieEntity implements MovieModel {
     public static class ShowtimeEntity {
 
         @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        private Long id;
+        @Column(unique = true, nullable = false)
+        private String id;
 
         private String day;
 
@@ -144,11 +150,13 @@ public class MovieEntity implements MovieModel {
 
 
         public ShowtimeEntity(String day, List<String> times) {
+            this();
             this.day = day;
             this.times = times;
         }
 
         public ShowtimeEntity() {
+            this.id = new ULID().nextULID();
         }
 
         public String getDay() {
@@ -167,11 +175,11 @@ public class MovieEntity implements MovieModel {
             this.times = times;
         }
 
-        public void setId(Long id) {
+        public void setId(String id) {
             this.id = id;
         }
 
-        public Long getId() {
+        public String getId() {
             return id;
         }
     }
