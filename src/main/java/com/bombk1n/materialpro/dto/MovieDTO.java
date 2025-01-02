@@ -140,5 +140,13 @@ public class MovieDTO {
         public void setTimes(List<String> times) {
             this.times = times;
         }
+
+        @Override
+        public String toString() {
+            return "ShowtimeDTO{" +
+                    "day='" + day + '\'' +
+                    ", times=" + times +
+                    '}';
+        }
     }
 }

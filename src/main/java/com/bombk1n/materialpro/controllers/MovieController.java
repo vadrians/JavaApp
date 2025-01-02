@@ -27,7 +27,8 @@ public class MovieController {
 
     @GetMapping("/{id}")
     public Optional<MovieDTO> getMovie(@PathVariable String id) {
-        return movieService.getMovieById(id);
+        Optional<MovieDTO> movie = movieService.getMovieById(id);
+        return movie;
     }
 
     @PostMapping
