@@ -1,0 +1,36 @@
+version: '3.9'
+
+volumes:
+  mongodb:
+
+services:
+  mongoDb:
+    image: mongo:latest
+    container_name: mongodb_server
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb+srv://adoptimax:69XRJr7Pzbvhe1ZF@adoptimax-dev.efm2whf.mongodb.net/?retryWrites=true&w=majority&appName=RomaTest
+      - SPRING_DATA_MONGODB_DATABASE=RomaTest
+    volumes:
+      - mongodb:/data/db
+    ports:
+      - "27017:27017"
+
+  backend:
+    image: bombk1nkpi/material-pro-back:latest
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongoDb
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb+srv://adoptimax:69XRJr7Pzbvhe1ZF@adoptimax-dev.efm2whf.mongodb.net/?retryWrites=true&w=majority&appName=RomaTest
+      - SPRING_DATA_MONGODB_DATABASE=RomaTest
+      - JAVA_OPTS=-Xmx512m
+
+  frontend:
+    image: bombk1nkpi/material-pro-front:latest
+    restart: always
+    ports:
+      - "4270:80"
+    depends_on:
+        - backend
